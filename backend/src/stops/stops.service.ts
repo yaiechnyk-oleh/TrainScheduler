@@ -3,17 +3,18 @@ import { PrismaService } from '../prisma/prisma.service'
 import { CreateStopDto } from './dto/create-stop.dto'
 import { UpdateStopDto } from './dto/update-stop.dto'
 import { Prisma } from '@prisma/client'
+import { RealtimeGateway } from '../realtime/realtime.gateway'
 
 @Injectable()
 export class StopsService {
-    constructor(private prisma: PrismaService) {}
+    constructor(private prisma: PrismaService, private rt: RealtimeGateway) {}
 
     list() {
         return this.prisma.stop.findMany({ orderBy: { name: 'asc' } })
     }
 
-    create(dto: CreateStopDto) {
-        return this.prisma.stop.create({
+    async create(dto: CreateStopDto) {
+        const created = await this.prisma.stop.create({
             data: {
                 name: dto.name,
                 city: dto.city,
@@ -21,10 +22,12 @@ export class StopsService {
                 ...(dto.lng !== undefined ? { lng: new Prisma.Decimal(dto.lng) } : {}),
             },
         })
+        this.rt.emitStopChanged({ type: 'CREATED', stopId: created.id })
+        return created
     }
 
-    update(id: string, dto: UpdateStopDto) {
-        return this.prisma.stop.update({
+    async update(id: string, dto: UpdateStopDto) {
+        const updated = await this.prisma.stop.update({
             where: { id },
             data: {
                 ...(dto.name !== undefined ? { name: dto.name } : {}),
@@ -33,9 +36,13 @@ export class StopsService {
                 ...(dto.lng !== undefined ? { lng: new Prisma.Decimal(dto.lng) } : {}),
             },
         })
+        this.rt.emitStopChanged({ type: 'UPDATED', stopId: id })
+        return updated
     }
 
-    remove(id: string) {
-        return this.prisma.stop.delete({ where: { id } })
+    async remove(id: string) {
+        const removed = await this.prisma.stop.delete({ where: { id } })
+        this.rt.emitStopChanged({ type: 'DELETED', stopId: id })
+        return removed
     }
 }

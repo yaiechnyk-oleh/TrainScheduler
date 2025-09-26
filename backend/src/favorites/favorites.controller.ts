@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Post, UseGuards } from '@nestjs/common'
+import {Body, Controller, Delete, Get, Param, Post, UseGuards} from '@nestjs/common'
 import { FavoritesService } from './favorites.service'
 import { JwtAuthGuard } from '../auth/jwt-auth.guard'
 import { GetUser } from '../auth/get-user.decorator'
@@ -26,7 +26,12 @@ export class FavoritesController {
     @ApiOkResponse({ description: 'Favorite added', schema: { example: { userId: 'u_1', routeId: 'r_1' } } })
     add(@GetUser() u: { userId: string }, @Body('routeId') routeId: string) { return this.svc.add(u.userId, routeId) }
 
-    @Delete()
-    @ApiOkResponse({ description: 'Favorite removed', schema: { example: { userId: 'u_1', routeId: 'r_1' } } })
-    remove(@GetUser() u: { userId: string }, @Body('routeId') routeId: string) { return this.svc.remove(u.userId, routeId) }
+    @Delete(':routeId')
+    @ApiOkResponse({
+        description: 'Favorite removed',
+        schema: { example: { userId: 'u_1', routeId: 'r_1' } },
+    })
+    remove(@GetUser() u: { userId: string }, @Param('routeId') routeId: string) {
+        return this.svc.remove(u.userId, routeId)
+    }
 }

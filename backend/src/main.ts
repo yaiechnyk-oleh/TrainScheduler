@@ -10,7 +10,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule)
   const allow = (process.env.CORS_ORIGINS ?? 'http://localhost:3000,exp://').split(',').map(s => s.trim())
   app.enableCors({ origin: allow, credentials: true })
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }))
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, transformOptions: { enableImplicitConversion: true }, }))
   app.useGlobalInterceptors(new LoggingInterceptor())
   app.useGlobalFilters(new PrismaExceptionFilter())
 
