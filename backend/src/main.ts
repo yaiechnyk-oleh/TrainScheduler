@@ -8,7 +8,7 @@ import { PrismaExceptionFilter } from './common/prisma-exception.filter'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
-  const allow = (process.env.CORS_ORIGINS ?? 'http://localhost:3000,exp://').split(',').map(s => s.trim())
+  const allow = (process.env.CORS_ORIGINS ?? 'http://localhost:3000,http://localhost:19006,http://127.0.0.1:19006').split(',').map(s => s.trim())
   app.enableCors({ origin: allow, credentials: true })
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, transformOptions: { enableImplicitConversion: true }, }))
   app.useGlobalInterceptors(new LoggingInterceptor())
