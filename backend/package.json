@@ -12,7 +12,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
 
-    "start:prod": "node dist/main.js",             // <-- don't use this on Railway now
+    "start:prod": "node dist/main.js",
     "postinstall": "prisma generate",
 
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
