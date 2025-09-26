@@ -1,0 +1,114 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum TrainType {
+  INTERCITY
+  REGIONAL
+  NIGHT
+}
+
+enum ScheduleStatus {
+  ON_TIME
+  DELAYED
+  CANCELLED
+}
+
+model User {
+  id         String         @id @default(cuid())
+  email      String         @unique
+  password   String
+  role       Role           @default(USER)
+  favorites  Favorite[]
+  tokens     RefreshToken[]
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+}
+
+model Stop {
+  id         String     @id @default(cuid())
+  name       String
+  city       String?
+  lat        Decimal?   @db.Decimal(9,6)
+  lng        Decimal?   @db.Decimal(9,6)
+  routeStops RouteStop[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@unique([city, name], name: "name_city")
+}
+
+model Route {
+  id         String      @id @default(cuid())
+  code       String?     @unique
+  name       String      @unique
+  stops      RouteStop[]
+  schedules  Schedule[]
+  favorites  Favorite[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model RouteStop {
+  routeId String
+  stopId  String
+  order   Int
+  minutesFromStart Int?
+
+  route   Route  @relation(fields: [routeId], references: [id])
+  stop    Stop   @relation(fields: [stopId], references: [id])
+
+  @@id([routeId, stopId])
+  @@unique([routeId, order])
+  @@index([routeId, order])
+}
+
+model Schedule {
+  id           String          @id @default(cuid())
+  routeId      String
+  trainType    TrainType
+  departAt     DateTime        @db.Timestamptz(6)
+  arriveAt     DateTime        @db.Timestamptz(6)
+  status       ScheduleStatus  @default(ON_TIME)
+  delayMinutes Int             @default(0)
+
+  route        Route           @relation(fields: [routeId], references: [id])
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([routeId, departAt])
+  @@index([trainType, departAt])
+}
+
+model Favorite {
+  userId  String
+  routeId String
+  user    User  @relation(fields: [userId], references: [id])
+  route   Route @relation(fields: [routeId], references: [id])
+
+  @@id([userId, routeId])
+}
+
+model RefreshToken {
+  id               String    @id @default(cuid())
+  jti              String    @unique
+  userId           String
+  user             User      @relation(fields: [userId], references: [id])
+  tokenHash        String
+  revoked          Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  expiresAt        DateTime  @db.Timestamptz(6)
+  replacedByToken  String?
+
+  @@index([userId, revoked, expiresAt])
+}
